@@ -63,7 +63,7 @@ Un bot de automatización avanzada para aplicar automáticamente a trabajos en L
 
 1. **Clonar el repositorio:**
 ```bash
-git clone https://github.com/kirusiya/Bot-Profesional-para-Aplicar-a-Empleos-en-LinkedIn.git
+git clone https://github.com/adnanedrief/linkedin-job-apply-automation.git
 cd linkedin-job-apply-automation
 ```
 
