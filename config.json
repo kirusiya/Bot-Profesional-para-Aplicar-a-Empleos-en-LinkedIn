@@ -1,0 +1,15 @@
+{
+    "email": "tu_email@gmail.com",
+    "password": "tu_pass_linkedin",
+    "ChromePath": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+    "keyword": "Developer",
+    "location": "España",
+    "Period": "Last Week",
+    "AvgExperience": 5,
+    "resolution": "--window-size=1300,700",
+    "baseURL": "https://www.linkedin.com/login",
+    "numberOfPagination": 14,
+    "numberOfOffersPerPage": 25,
+    "fullKeys": "laravel, wordpress, fullstack, full stack developer, fullstack developer, wordpress developer, desarrollador fullstack, desarrollador full stack, frontend developer, backend developer, desarrollador laravel, laravel developer, php, node developer, desarrollador node, react native, react, vue, full stack, web developer, desarrollador web, programador web, node, PHP, Full Stack, Backend, Frontend, programador fullstack, fullstack programmer, full stack programmer, desarrollador Wordpress, senior wordpress, wordpress senior, full stack php, fullstack php, node.js, react.js, vite, next.js, nuxt.js. vue.js, IA, desarrollador, programador, developer, fullstack, full stack, full-stack, desarrollador/a, frontend, backend, senior, dev, node, react, vue, vite, next, nuxt, llm, mll, php, javascript, html, web, middle, github",
+    "badKeys":".net, java, devops, swift, c++, c#, marketing, intern, social media, ios, salesforce, ruby, copy editor, odoo"
+}

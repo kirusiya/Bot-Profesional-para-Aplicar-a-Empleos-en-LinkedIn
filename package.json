@@ -1,0 +1,23 @@
+{
+    "name": "Bot Profesional para Aplicar a Empleos en LinkedIn",
+    "version": "1.0.0",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "Adnane Drief",
+    "link": "https://github.com/kirusiya/Bot-Profesional-para-Aplicar-a-Empleos-en-LinkedIn",
+    "license": "MIT",
+    "keywords": [
+        "linkedin",
+        "automation",
+        "automation",
+        "jobs",
+        "Apply"
+    ],
+    "description": "",
+    "dependencies": {
+        "nodemon": "^2.0.22",
+        "puppeteer": "^17.1.3"
+    }
+}
