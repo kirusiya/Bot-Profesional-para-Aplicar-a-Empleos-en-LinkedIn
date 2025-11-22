@@ -230,6 +230,8 @@ async function fillFormFields() {
   await page.waitForTimeout(2000)
 
   try {
+
+    
     // 1. LLENAR TODOS LOS CAMPOS DE EXPERIENCIA con valor 2
     console.log("=== INICIO DEBUG EXPERIENCIA ===")
     console.log("Valor de avgOfExp:", avgOfExp)
@@ -465,6 +467,8 @@ async function fillFormFields() {
   await page.waitForTimeout(1000)
 
   await detectDiscardModal()
+
+  await detectDiscardEmpyfield()
 }
 
 async function detectDiscardModal() {
@@ -495,7 +499,7 @@ async function detectDiscardModal() {
               oscillator.stop(startTime + duration);
           }
           
-          // Crear 4 bips con pausas entre ellos
+          // Crear 6 bips con pausas entre ellos
           const beepDuration = 0.2; // Duración de cada bip
           const pauseDuration = 0.15; // Pausa entre bips
           
@@ -503,13 +507,61 @@ async function detectDiscardModal() {
               const startTime = audioContext.currentTime + (i * (beepDuration + pauseDuration));
               createBeep(startTime, beepDuration);
           }
-      });
+      }); 
 
       return true // Modal detectado
     }
     return false // No hay modal
   } catch (error) {
     console.log("Error al detectar modal de descarte:", error)
+    return false
+  }
+}
+
+async function detectDiscardEmpyfield() {
+  try {
+    const empyField = await page.$('.artdeco-inline-feedback__icon')
+    if (empyField) {
+      console.log('🚨 NECESITA AYUDA MANUAL - Reproduciendo alerta');
+      
+      // Sonido simple con 6 beeps
+      // Reproducir sonido de alerta (beep corto)
+      await page.evaluate(() => {
+          const audioContextFall = new (window.AudioContext || window.webkitAudioContext)();
+          
+          // Función para crear un bip individual
+          function createBeepFall(startTimeFall, duration = 0.2) {
+              const oscillatorFall = audioContextFall.createOscillator();
+              const gainNodeFall = audioContextFall.createGain();
+              
+              oscillatorFall.connect(gainNodeFall);
+              gainNodeFall.connect(audioContextFall.destination);
+              
+              oscillatorFall.frequency.value = 800; // Frecuencia del beep
+              oscillatorFall.type = 'sine';
+              
+              gainNodeFall.gain.setValueAtTime(0.3, startTimeFall);
+              gainNodeFall.gain.exponentialRampToValueAtTime(0.01, startTimeFall + duration);
+              
+              oscillatorFall.start(startTimeFall);
+              oscillatorFall.stop(startTimeFall + duration);
+          }
+          
+          // Crear 4 bips con pausas entre ellos
+          const beepDurationFall = 0.2; // Duración de cada bip
+          const pauseDurationFall = 0.15; // Pausa entre bips
+          
+          for (let i = 0; i < 6; i++) {
+              const startTimeFall = audioContextFall.currentTime + (i * (beepDurationFall + pauseDurationFall));
+              createBeepFall(startTimeFall, beepDurationFall);
+          }
+      });
+
+      return true // campo vacio  detectado
+    }
+    return false // 
+  } catch (error) {
+    console.log("Error al detectar campo vacio:", error)
     return false
   }
 }
@@ -606,6 +658,13 @@ async function checkBadKeywords(jobSelector) {
           
           const escapedBadKeyDesc = badKey.replace(/[+*?^${}()|[\]\\]/g, '\\$&');
           const descriptionRegex = new RegExp(`(^|[\\s/(),-])(${escapedBadKeyDesc})($|[\\s/(),-])`, "i");
+
+
+          if (badKey.toLowerCase().trim() === "devops" && descriptionRegex.test(descriptionText)) {
+            console.log('🔥 "devops" encontrada en descripción pero se IGNORA como badKey');
+            continue; // 🔥 No marcamos como encontrada, seguimos con la siguiente badKey
+          }
+
           if (descriptionRegex.test(descriptionText)) {
             console.log(`❌ BadKey "${badKey}" encontrada en descripción`)
             return { found: true, location: "descripción", keyword: badKey }
@@ -838,22 +897,6 @@ async function FillAndApply() {
 
       await page.waitForTimeout(2000)
 
-      console.log("Verificando badKeys en título y descripción...")
-      const hasBadKeywords = await checkBadKeywords(selectedJobSelector)
-
-      if (hasBadKeywords) {
-        console.log("⏭ Saltando aplicación - trabajo contiene badKeys")
-        if (index === nbrOfOffersPerPage) {
-          console.log("📄 Es el último trabajo de la página, intentando paginación...")
-          const paginationSuccess = await handlePagination()
-          if (!paginationSuccess) {
-            console.log("❌ No se pudo paginar, terminando proceso")
-            return
-          }
-        }
-        continue
-      }
-
       console.log("Verificando el tiempo de la publicacion antes de proceder...")
       const tooManyApplications = await checkTooManyApplications()
 
@@ -865,7 +908,7 @@ async function FillAndApply() {
           console.log("⏰ Esperando 5 minutos antes de recargar la primera página...")
 
           // Esperar 5 minutos (300,000 milisegundos)
-          await page.waitForTimeout(300000)
+          await page.waitForTimeout(180000)
 
           console.log("🔄 Recargando primera página:", firstPageUrl)
           await page.goto(firstPageUrl)
@@ -890,6 +933,23 @@ async function FillAndApply() {
         continue // Continuar al siguiente trabajo en lugar de terminar todo el proceso
       }
 
+      console.log("Verificando badKeys en título y descripción...")
+      const hasBadKeywords = await checkBadKeywords(selectedJobSelector)
+
+      if (hasBadKeywords) {
+        console.log("⏭ Saltando aplicación - trabajo contiene badKeys")
+        if (index === nbrOfOffersPerPage) {
+          console.log("📄 Es el último trabajo de la página, intentando paginación...")
+          const paginationSuccess = await handlePagination()
+          if (!paginationSuccess) {
+            console.log("❌ No se pudo paginar, terminando proceso")
+            return
+          }
+        }
+        continue
+      }
+
+      
       const isAlreadyApplied = await page.evaluate(() => {
         // Buscar indicadores de que ya se aplicó al trabajo
         const appliedIndicators = [
@@ -1170,11 +1230,9 @@ async function FillAndApply() {
           }
 
           // Después de completar la aplicación
-          const randomWaitTime = Math.floor(Math.random() * (600000 - 300000 + 1)) + 300000;
+          const randomWaitTime = Math.floor(Math.random() * (360000 - 180000 + 1)) + 180000;
           console.log(`⏰ Esperando ${Math.round(randomWaitTime/1000/60 * 10)/10} minutos antes del siguiente trabajo...`);
           await page.waitForTimeout(randomWaitTime); 
-
-
 
         }
       }
@@ -1188,9 +1246,6 @@ async function FillAndApply() {
         }
       }
 
-       
-
-
     }
 
     // await buttonClick(`ul[class="artdeco-pagination__pages artdeco-pagination__pages--number"]>li:nth-child(${lastIndexForPagination})`)
@@ -1201,6 +1256,53 @@ async function FillAndApply() {
 }
 
 async function jobCriteriaByTime() {
+
+  // 🔥 Helper interno para hacer click en "Mostrar resultados"
+  async function clickTimeFilterApplyButton() { // 🔥 NUEVO
+    // 🔥 Probamos varios selectores robustos
+    const applySelectors = [
+      'button[aria-label*="Aplicar el filtro actual para mostrar resultados"]',
+      '.reusable-search-filters-buttons button.artdeco-button--primary',
+      'button.artdeco-button--primary.ml2'
+    ]
+
+    for (const selector of applySelectors) {
+      const successApply = await buttonClick(selector)
+      if (successApply) {
+        console.log(`🔥 Botón "Mostrar resultados" clicado con: ${selector}`)
+        return true
+      }
+    }
+
+    // 🔥 Fallback: buscar el botón por el texto "Mostrar resultados"
+    try {
+      const buttonHandle = await page.waitForFunction(
+        () => {
+          const buttons = Array.from(document.querySelectorAll("button"))
+          return buttons.find(
+            (b) =>
+              b.textContent &&
+              b.textContent.trim().includes("Mostrar resultados")
+          ) || null
+        },
+        { timeout: 5000 }
+      )
+
+      if (buttonHandle) {
+        await buttonHandle.click()
+        console.log('🔥 Botón "Mostrar resultados" clicado por texto')
+        return true
+      }
+    } catch (e) {
+      console.log('🔥 No se pudo encontrar botón "Mostrar resultados" por texto:', e.message)
+    }
+
+    console.log('🔥 No se pudo hacer click en "Mostrar resultados"')
+    return false
+  }
+  // ------------- FIN helper nuevo 🔥 -------------
+
+
   // Intentar hacer click en EASY APPLY con múltiples selectores
   const easyApplySelectors = [
     ".search-reusables__filter-binary-toggle",
@@ -1253,7 +1355,8 @@ async function jobCriteriaByTime() {
     const success = await buttonClick('label[for="timePostedRange-r86400"]')
     if (success) {
       await page.waitForTimeout(2000)
-      await buttonClick('button[aria-label*="Aplicar el filtro actual"]')
+      //await buttonClick('button[aria-label*="Aplicar el filtro actual para mostrar resultados"]')
+      await clickTimeFilterApplyButton() //
     }
   } else {
     // Past week
@@ -1261,7 +1364,8 @@ async function jobCriteriaByTime() {
     const success = await buttonClick('label[for="timePostedRange-r604800"]')
     if (success) {
       await page.waitForTimeout(2000)
-      await buttonClick('button[aria-label*="Aplicar el filtro actual"]')
+      //await buttonClick('button[aria-label*="Aplicar el filtro actual para mostrar resultados"]')
+      await clickTimeFilterApplyButton() //
     }
   }
 }
@@ -1317,11 +1421,16 @@ async function checkTooManyApplications() {
 }
 
 async function jobsApply() {
-  await buttonClick("#global-nav > div > nav > ul > li:nth-child(3)")
-  await waitForSelectorAndType('[id^="jobs-search-box-keyword-id"]', keyword)
-  await clearAndType('[id^="jobs-search-box-location-id"]', location)
-  await page.waitForTimeout(1000)
+  await buttonClick("body header nav ul li:nth-child(3) a")
+  await waitForSelectorAndType('body header input[componentkey="jobSearchBox"]', keyword)
+  await clearAndType('body header input[placeholder="Ciudad, provincia o código postal"]', location)
+  await page.waitForTimeout(800)
+
+  await page.keyboard.press("ArrowDown")
   await page.keyboard.press("Enter")
+  await page.waitForTimeout(500)
+  await page.keyboard.press("Enter")
+
   await jobCriteriaByTime()
   await page.waitForTimeout(3000)
   await jobCriteriaByType()
